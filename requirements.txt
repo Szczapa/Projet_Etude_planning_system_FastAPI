@@ -1,0 +1,5 @@
+SQLAlchemy~=2.0.10
+fastapi~=0.95.1
+mysql-connector-python~=8.0.33
+
+
