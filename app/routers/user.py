@@ -1,5 +1,5 @@
 from sqlalchemy.orm import sessionmaker, Session
-from fastapi import APIRouter, status, HTTPException, Response
+from fastapi import APIRouter, status, HTTPException, Response, Depends
 from db.db_inc import engine, Base
 from modeles.user import User, UserCreate
 from modeles.role import Role
@@ -48,9 +48,11 @@ def create_user(user: UserCreate):
     db.refresh(new_user)
     return new_user
 
+
 def role_exists(db: Session, role_id: int) -> bool:
     return db.query(Role).filter(Role.id == role_id).first() is not None
 
 
-def crypt_password(password: str) -> str:
-    return password
+# @router.get("/user/me")
+# def read_my_info(current_user: User = Depends(get_current_user)):
+#     return {"username": current_user.username}

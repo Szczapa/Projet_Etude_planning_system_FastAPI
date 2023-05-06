@@ -8,8 +8,9 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True)
     email = Column(String(50), unique=True, index=True)
-    password = Column(String(50), index=True)
+    password = Column(String(255), index=True)
     role_id = Column(Integer, ForeignKey("roles.id"), index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True)
 
 
 class UserCreate(BaseModel):
@@ -17,3 +18,12 @@ class UserCreate(BaseModel):
     email: str
     password: str
     role_id: int
+
+
+class UserOut(BaseModel):
+    id: int
+    username: str
+    email: str
+    role_id: int
+    company_id: int
+
