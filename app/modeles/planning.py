@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from db.db_inc import Base
 from datetime import datetime
 from pydantic import BaseModel
+
 
 class Planning(Base):
     __tablename__ = "plannings"
@@ -19,3 +20,16 @@ class PlanningCreate(BaseModel):
     company_id: int
     start_date: datetime
     end_date: datetime
+
+
+class PlanningParticipant(Base):
+    __tablename__ = "planning_participant"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    planning_id = Column(Integer, ForeignKey("plannings.id"), nullable=False)
+
+    class Config:
+        orm_mode = True
+        exclude = ('user_id',)
+
+
