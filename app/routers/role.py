@@ -14,8 +14,8 @@ def read_roles():
     return roles
 
 
-@router.get("/roles/{role_id}")
-def read_role(role_id: int):
-    db = SessionLocal()
-    role = db.query(Role).filter(Role.id == role_id).first()
-    return role
+# @router.get("/roles/{role_id}")
+# def read_role(role_id: int):
+#     db = SessionLocal()
+#     role = db.query(Role).filter(Role.id == role_id).first()
+#     return role
