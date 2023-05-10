@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, HTTPException, Response, Depends
 from db.db_inc import engine, Base
-from modeles.planning import Planning, PlanningCreate
+from modeles.planning import Planning, PlanningCreate, PlanningParticipant
 from modeles.user import User
 from sqlalchemy.orm import sessionmaker
 from routers.login import get_current_user
@@ -20,24 +20,24 @@ def read_plannings(current_user: User = Depends(get_current_user)):
     return plannings
 
 
-@router.get("/plannings/{planning_id}")
-def read_planning(planning_id: int, current_user: User = Depends(get_current_user)):
-    db = SessionLocal()
-    planning = db.query(Planning).filter(Planning.id == planning_id).first()
-    if planning is None:
-        raise HTTPException(status_code=204, detail="Planning not found")
-    if planning.company_id != current_user.company_id:
-        raise HTTPException(status_code=204, detail="Planning not found")
-    return planning
+# @router.get("/plannings/{planning_id}")
+# def read_planning(planning_id: int, current_user: User = Depends(get_current_user)):
+#     db = SessionLocal()
+#     planning = db.query(Planning).filter(Planning.id == planning_id).first()
+#     if planning is None:
+#         raise HTTPException(status_code=204, detail="Planning not found")
+#     if planning.company_id != current_user.company_id:
+#         raise HTTPException(status_code=204, detail="Planning not found")
+#     return planning
 
 
 @router.delete("/plannings/{planning_id}")
-def delete_planning(planning_id: int, current_user: User = Depends(get_current_user), Role=Role):
+def delete_planning(planning_id: int, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     planning = db.query(Planning).filter(Planning.id == planning_id).first()
     if planning is None:
         raise HTTPException(status_code=404, detail="Planning not found")
-    if planning.creator != current_user.id:
+    if planning.creator != current_user.id or current_user.role_id != 2:
         raise HTTPException(status_code=401, detail="Not authorized to delete this planning")
     db.delete(planning)
     db.commit()
@@ -61,3 +61,76 @@ def create_planning(planning: PlanningCreate, current_user: User = Depends(get_c
         db.commit()
         db.refresh(new_planning)
         return new_planning
+
+
+@router.post("/plannings/{planning_id}/join")
+def join_planning(
+        planning_id: int,
+        current_user: User = Depends(get_current_user)
+):
+    db = SessionLocal()
+    planning = db.query(Planning).filter(Planning.id == planning_id).first()
+    if planning is None:
+        raise HTTPException(status_code=404, detail="Planning not found")
+    if planning.company_id != current_user.company_id:
+        raise HTTPException(status_code=401, detail="Not authorized to interact with this planning")
+    else:
+        participant = db.query(PlanningParticipant).filter_by(
+            user_id=current_user.id,
+            planning_id=planning_id
+        ).first()
+        if participant is not None:
+            raise HTTPException(status_code=409, detail="User already joined this planning")
+        new_participant = PlanningParticipant(
+            planning_id=planning_id,
+            user_id=current_user.id
+        )
+        db.add(new_participant)
+        db.commit()
+        db.refresh(new_participant)
+        return new_participant
+
+
+@router.delete("/plannings/leave/{planning_id}")
+def leave_planning(
+        planning_id: int,
+        current_user: User = Depends(get_current_user)
+):
+    db = SessionLocal()
+    planning = db.query(Planning).filter(Planning.id == planning_id).first()
+    if planning is None:
+        raise HTTPException(status_code=404, detail="Planning not found")
+    if planning.company_id != current_user.company_id:
+        raise HTTPException(status_code=401, detail="Not authorized to interact with this planning")
+    else:
+        participant = db.query(PlanningParticipant).filter_by(
+            user_id=current_user.id,
+            planning_id=planning_id
+        ).first()
+        if participant is None:
+            raise HTTPException(status_code=409, detail="User already left this planning")
+        db.delete(participant)
+        db.commit()
+        return {"message": "User successfully left planning"}
+
+
+@router.get("/plannings/{planning_id}/participants")
+def read_planning_participants(planning_id: int, current_user: User = Depends(get_current_user)):
+    db = SessionLocal()
+    planning = db.query(Planning).filter(Planning.id == planning_id).first()
+    if planning is None:
+        raise HTTPException(status_code=404, detail="Planning not found")
+    if planning.company_id != current_user.company_id:
+        raise HTTPException(status_code=401, detail="Not authorized to interact with this planning")
+    else:
+        participants = db.query(PlanningParticipant).filter_by(planning_id=planning_id).all()
+        if len(participants) == 0:
+            raise HTTPException(status_code=204, detail="Participants not found")
+        elif current_user.role_id == 2:
+            participant_ids = [participant.user_id for participant in participants]
+            return participant_ids
+        else:
+            return {"number_of_participants": len(participants)}
+
+
+

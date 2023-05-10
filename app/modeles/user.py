@@ -18,6 +18,7 @@ class UserCreate(BaseModel):
     email: str
     password: str
     role_id: int
+    company_id: int
 
 
 class UserOut(BaseModel):
@@ -26,4 +27,3 @@ class UserOut(BaseModel):
     email: str
     role_id: int
     company_id: int
-
