@@ -1,7 +1,7 @@
 from db.db_inc import engine, SessionLocal, Base
 from sqlalchemy import Column, Integer, String, ForeignKey
-from pydantic import BaseModel
-
+from pydantic import BaseModel, Field
+from typing import Optional
 
 class User(Base):
     __tablename__ = "users"
@@ -27,3 +27,8 @@ class UserOut(BaseModel):
     email: str
     role_id: int
     company_id: int
+class UserUpdate(BaseModel):
+    username: Optional[str] = Field(None, description="Username of the user")
+    email: Optional[str] = Field(None, description="Email of the user")
+    role_id: Optional[int] = Field(None, description="Role ID of the user")
+    password: Optional[str] = Field(None, description="Password of the user")
