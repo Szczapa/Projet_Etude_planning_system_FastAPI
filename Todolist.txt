@@ -1,0 +1,15 @@
+Projet Back-end:
+
+Il faudra de ce fait proposer également un script / moyen d'initialiser la base de données
+
+Les infos sensibles (nom, prénom, email doivent être encryptés)
+
+Il y aura des droits d'accès, certains utilisateurs pourront être admin et de ce fait "Update" des utilisateurs
+autres qu'eux-mêmes
+
+Un changement d'une activité pour laquelle un utilisateur est inscrit doit générer une notification pour les
+utilisateurs de cette activité. De plus les notifications pourront avoir un statut lu/non lu
+
+
+Concernant une activité qu’il a créée, il a tous les droits, il peut changer la date, le lieu, le nom.
+L’admin peut lui agir sur toutes les activités de son entreprise il peut même en plus du “owner” de l’activité ajouter ou supprimer des inscrits.
