@@ -7,6 +7,12 @@ from modeles.company import Company
 from routers.login import get_current_user
 from sqlalchemy import func
 import bcrypt
+from cryptography.fernet import Fernet
+import base64
+
+key = b'OP7RRCuQzEpyIGaoiywUqh_S068cJbtXCNGPF47vzQs='
+
+fernet = Fernet(key)
 
 router = APIRouter()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -19,7 +25,22 @@ def read_users(current_user: User = Depends(get_current_user)):
         users = db.query(User).all()
     elif current_user.role_id == 2:
         users = db.query(User).filter(User.company_id == current_user.company_id).all()
-    return users
+
+    decrypted_users = []
+    for user in users:
+        decrypted_username = fernet.decrypt(base64.urlsafe_b64decode(user.username.encode('utf-8'))).decode('utf-8')
+        decrypted_email = fernet.decrypt(base64.urlsafe_b64decode(user.email.encode('utf-8'))).decode('utf-8')
+
+        decrypted_user = {
+            'username': decrypted_username,
+            'email': decrypted_email,
+            'password': user.password,
+            'role_id': user.role_id,
+            'company_id': user.company_id
+        }
+        decrypted_users.append(decrypted_user)
+
+    return decrypted_users
 
 
 # @router.get("/users/{user_id}")
@@ -31,8 +52,8 @@ def read_users(current_user: User = Depends(get_current_user)):
 
 @router.post("/users")
 def create_user(
-        user: UserCreate,
-        current_user: User = Depends(get_current_user)
+        user: UserCreate
+        , current_user: User = Depends(get_current_user)
 ):
     """
     Role 1: User;
@@ -54,44 +75,47 @@ def create_user(
                 detail="Invalid role_id"
             )
 
-        # Hash the password
-        hashed_password = bcrypt.hashpw(
-            user.password.encode('utf-8'),
-            bcrypt.gensalt()
-        )
+    # Hash the password
+    hashed_password = bcrypt.hashpw(
+        user.password.encode('utf-8'),
+        bcrypt.gensalt()
+    )
 
-        if user.company_id is None:
+    if user.company_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing company_id"
+        )
+    else:
+        company = db.query(Company).filter_by(
+            id=user.company_id
+        ).first()
+        if company is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Missing company_id"
-            )
-        else:
-            company = db.query(Company).filter_by(
-                id=user.company_id
-            ).first()
-            if company is None:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid company_id"
-                )
-
-        if email_exists(db, user.email.lower()):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User already exists"
+                detail="Invalid company_id"
             )
 
-        new_user = User(
-            username=user.username,
-            email=user.email.lower(),
-            password=hashed_password,
-            role_id=user.role_id,
-            company_id=user.company_id,
+    if email_exists(db, user.email.lower()):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already exists"
         )
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        return new_user
+
+    encrypted_username = fernet.encrypt(user.username.encode('utf-8'))
+    encrypted_email = fernet.encrypt(user.email.lower().encode('utf-8'))
+
+    new_user = User(
+        username=base64.urlsafe_b64encode(encrypted_username).decode('utf-8'),
+        email=base64.urlsafe_b64encode(encrypted_email).decode('utf-8'),
+        password=hashed_password,
+        role_id=user.role_id,
+        company_id=user.company_id,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
 
 def role_exists(db: Session, role_id: int) -> bool:
@@ -99,7 +123,17 @@ def role_exists(db: Session, role_id: int) -> bool:
 
 
 def email_exists(db: Session, email: str) -> bool:
-    return db.query(User).filter(func.lower(User.email) == email).first() is not None
+    users = db.query(User).all()
+
+    if not users:
+        return False
+
+    for user in users:
+        decrypted_email = fernet.decrypt(base64.urlsafe_b64decode(user.email.encode('utf-8'))).decode('utf-8')
+        if decrypted_email.lower() == email.lower():
+            return True
+
+    return False
 
 
 @router.delete("/users/{user_id}")
@@ -190,4 +224,3 @@ def update_user(user_id: int, user: UserUpdate, current_user: User = Depends(get
     db.commit()
     db.refresh(user_to_update)
     return user_to_update
-
