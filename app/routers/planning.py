@@ -53,9 +53,7 @@ def create_planning(planning: PlanningCreate, current_user: User = Depends(get_c
         new_planning = Planning(
             name=planning.name,
             creator=current_user.id,
-            company_id=current_user.company_id,
-            start_date=datetime.today().date(),
-            end_date=planning.end_date,
+            company_id=current_user.company_id
         )
         db.add(new_planning)
         db.commit()
