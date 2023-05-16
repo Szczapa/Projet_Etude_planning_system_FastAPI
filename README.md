@@ -1,18 +1,76 @@
-Bonjour,
-Voici le Read.me du projet Python de gestion de planning à rendre le 15/05/2023
+# Planning System V1
 
-Installation
-Pour installer le projet voici le lien :
+Dans le cadre de la dernière année de licence nous avons était ammené à réaliser un Systeme de Planning sous language Python.
+Pour y parvenir nous avons utilisé l'api FastApi afin de permettre la gestion des fonctionnalités du projet.
 
-Installer les dépendances :
-pip install -r requirements.txt
+## Deployment
 
-Installation de la base de données :
+Lien du git :
 
-Fichier sql dans le dossier :
+```bash
+  https://github.com/Szczapa/planning_system.git
+```
 
-Lancement du projet sur Docker :
-docker-compose up --build
+Pour déployer le projet voici la commande à entrer :
+
+```bash
+  docker-compose up --build
+```
+
+# Log Base de donnée
+
+Comment initialiser la Base de données ?
+
+Url phpmyadmin :
+
+```bash
+    http://localhost:8080/
+```
+
+```bash
+    Username : Root
+```
+
+```bash
+    Password : Root
+```
+
+# Accès à l'api FAST API
+
+```bash
+  http://localhost:81/docs
+```
+
+# Générale
+
+- Auto création de la base de données et installation des dépendances
+- Données sensible Chiffré ou hashé + salage
+- Token JWT sur les connections utilisateurs
+- Vérification des droits à chaque éxécution
+
+# Maintainer
+
+- Gestion total des users
+- Gestion des entreprises
+- Fullscreen mode
+- Cross platform
+
+# Admin
+
+- Modification des users
+- Gestion des plannings
+- Gestion des Activités
+
+# User
+
+- Rejoindre / Quitter Planning
+- Création d'activité
+- Gestion des participants à son activité
+
+## Tech Stack
+
+- **Server:** - Mariadb, Apache, FastApi
+- **Extentions:** - Bcrypt, Fernet, jwt, sqlalchemy, pydantic
 
 ## Tableau des utilisateurs :
 
@@ -31,4 +89,6 @@ docker-compose up --build
 | Super_cars    | User       | David             | david@supercars.fr     | David1234    |
 | Super_cars    | User       | Sarah             | sarah@supercars.fr     | Sarah1234    |
 
-Auteur : - Gilabert Adam : github.com/Szczapa
+## Authors
+
+- [@Szczapa](https://github.com/Szczapa)
