@@ -26,6 +26,7 @@ services:
       MYSQL_PASSWORD: fastapi
     volumes:
       - ./app/mysql:/var/lib/mysql
+      - ./db-init:/docker-entrypoint-initdb.d  # Add this line
     networks:
       - fast-network
     restart: always
