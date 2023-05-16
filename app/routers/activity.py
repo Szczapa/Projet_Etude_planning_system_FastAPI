@@ -17,27 +17,27 @@ def read_activities(current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     activities = db.query(Activity).filter(User.company_id == Activity.company_id).all()
     if len(activities) == 0:
-        raise HTTPException(status_code=204, detail="Activities not found")
+        raise HTTPException(status_code=404, detail="Activities not found")
     return activities
 
 
-@router.get("/activities/{activity_id}")
+@router.get("/activity/{activity_id}")
 def read_activity(activity_id: int, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     activity = db.query(Activity).filter(Activity.id == activity_id,
                                          current_user.company_id == Activity.company_id).first()
     if activity is None:
-        raise HTTPException(status_code=204, detail="Activity not found")
+        raise HTTPException(status_code=404, detail="Activity not found")
     return activity
 
 
-@router.post("/create/activities/{planning_id}")
+@router.post("/create/activity/{planning_id}")
 def create_activity(planning_id: int, activity: ActivityCreate, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     if not isCompanyPlanning(planning_id, current_user.company_id, db):
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid planning ID")
+        raise HTTPException(status_code=422, detail="Invalid planning ID")
     if not isInPlanning(planning_id, current_user.id, db):
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="User not in planning")
+        raise HTTPException(status_code=422, detail="User not in planning")
 
     new_activity = Activity(
         name=activity.name,
@@ -54,13 +54,13 @@ def create_activity(planning_id: int, activity: ActivityCreate, current_user: Us
     return {"message": "Activity created successfully"}
 
 
-@router.delete("/delete/activity/{activity_id}")
+@router.delete("/activity/{activity_id}/delete")
 def delete_activity(activity_id: int, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     activity = db.query(Activity).filter(Activity.id == activity_id,
                                          current_user.company_id == Activity.company_id).first()
     if activity is None:
-        raise HTTPException(status_code=204, detail="Activity not found")
+        raise HTTPException(status_code=404, detail="Activity not found")
 
     elif activity.creator_id != current_user.id or current_user.role != 2:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -69,7 +69,7 @@ def delete_activity(activity_id: int, current_user: User = Depends(get_current_u
     return {"message": "Activity deleted successfully"}
 
 
-@router.post("/join/activity/{activity_id}")
+@router.post("/activity/{activity_id}/join")
 def join_activity(activity_id: int, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
 
@@ -80,7 +80,7 @@ def join_activity(activity_id: int, current_user: User = Depends(get_current_use
         raise HTTPException(status_code=404, detail="Activity not found")
 
     if not isInPlanning(activity.planning_id, current_user.id, db):
-        raise HTTPException(status_code=404, detail=" user not in planning")
+        raise HTTPException(status_code=404, detail="Join planning '" + str(activity.planning_id) + "' first")
 
     new_participant = ActivityParticipants(
         activity_id=activity_id,
@@ -91,19 +91,22 @@ def join_activity(activity_id: int, current_user: User = Depends(get_current_use
     return {"message": "User joined activity successfully"}
 
 
-@router.post("/activity_add/{activity_id}//{user_id}")
+@router.post("/activity_add/{activity_id}/{user_id}")
 def add_activity(activity_id: int, user_id: int, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
-    if current_user.role != 2 or current_user.id != activity.creator_id:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
     activity = db.query(Activity).filter(Activity.id == activity_id,
                                          current_user.company_id == Activity.company_id).first()
+
+    if current_user.role_id != 2 or current_user.id != activity.creator_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     if activity is None:
-        raise HTTPException(status_code=204, detail="Activity not found")
+        print("activity not found")
+        raise HTTPException(status_code=404, detail="Activity not found")
 
     if not isInPlanning(activity.planning_id, user_id, db):
-        raise HTTPException(status_code=204, detail="User not in planning")
+        raise HTTPException(status_code=401,
+                            detail="Please add user to planning '" + str(activity.planning_id) + "' first")
 
     new_participant = ActivityParticipants(
         activity_id=activity_id,
@@ -120,34 +123,35 @@ def leave_activity(activity_id: int, current_user: User = Depends(get_current_us
     activity = db.query(Activity).filter(Activity.id == activity_id,
                                          current_user.company_id == Activity.company_id).first()
     if activity is None:
-        raise HTTPException(status_code=204, detail="Activity not found")
+        raise HTTPException(status_code=404, detail="Activity not found")
 
     participant = db.query(ActivityParticipants).filter(ActivityParticipants.activity_id == activity_id,
                                                         ActivityParticipants.user_id == current_user.id).first()
 
     if participant is None:
-        raise HTTPException(status_code=204, detail="User not in activity")
+        raise HTTPException(status_code=404, detail="User not in activity")
 
     db.delete(participant)
     db.commit()
     return {"message": "User left activity successfully"}
 
 
-@router.delete("/kick/{user_id}/{activity_id}")
+@router.delete("/kick/{activity_id}/{user_id}")
 def kick_activity(user_id: int, activity_id: int, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
+    activity = db.query(Activity).filter(Activity.id == activity_id,
+                                         current_user.company_id == Activity.company_id).first()
     if current_user.role_id != 2 or current_user.id != activity.creator_id:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    activity = db.query(Activity).filter(Activity.id == activity_id,
-                                         current_user.company_id == Activity.company_id).first()
+
     if activity is None:
-        raise HTTPException(status_code=204, detail="Activity not found")
+        raise HTTPException(status_code=404, detail="Activity not found")
 
     participant = db.query(ActivityParticipants).filter(ActivityParticipants.activity_id == activity_id,
                                                         ActivityParticipants.user_id == user_id).first()
     if participant is None:
-        raise HTTPException(status_code=204, detail="User not in activity")
+        raise HTTPException(status_code=404, detail="User not in activity")
 
     db.delete(participant)
     db.commit()

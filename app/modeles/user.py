@@ -6,8 +6,8 @@ from typing import Optional
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True, index=True)
-    email = Column(String(50), unique=True, index=True)
+    username = Column(String(255), unique=True, index=True)
+    email = Column(String(255), unique=True, index=True)
     password = Column(String(255), index=True)
     role_id = Column(Integer, ForeignKey("roles.id"), index=True)
     company_id = Column(Integer, ForeignKey("companies.id"), index=True)

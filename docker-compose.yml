@@ -8,7 +8,44 @@ services:
       - 81:80
     volumes:
       - './app/:/app'
+    depends_on:
+      - db
     environment:
       - LOG_LEVEL=info
       - RELOAD=true # when in use with ghcr.io/multi-py/python-uvicorn image
     # command: /bin/sh -c "/start-reload.sh" # For production, this line should be removed (no need for hot reload)
+    networks:
+      - fast-network
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: teamwork_management
+      MYSQL_USER: fastapi
+      MYSQL_PASSWORD: fastapi
+    volumes:
+      - ./app/mysql:/var/lib/mysql
+    networks:
+      - fast-network
+    restart: always
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - 8080:80
+    environment:
+    - PMA_HOST=db # permet de lier le container phpmyadmin au container db pour qu'il puisse y accéder
+    - PHP_UPLOAD_MAX_FILESIZE=128M # permet de modifier la taille maximale des fichiers uploadés
+    - PHP_MAX_INPUT_VARS=5000 # permet de modifier le nombre maximum de variables acceptées
+    - PHP_MEMORY_LIMIT=512M # permet de modifier la limite de mémoire
+    - PHP_POST_MAX_SIZE=128M # permet de modifier la taille maximale des fichiers postés
+    networks:
+      - fast-network
+    depends_on:
+      - db
+    restart: always
+
+networks:
+    fast-network:
+      driver: bridge

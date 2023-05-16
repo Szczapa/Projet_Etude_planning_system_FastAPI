@@ -10,16 +10,12 @@ class Planning(Base):
     name = Column(String(50), unique=True, index=True)
     company_id = Column(Integer, index=True)
     creator = Column(Integer, index=True)
-    start_date = Column(DateTime, index=True)
-    end_date = Column(DateTime, index=True)
 
 
 class PlanningCreate(BaseModel):
     name: str
     creator: int
     company_id: int
-    start_date: datetime
-    end_date: datetime
 
 
 class PlanningParticipant(Base):
