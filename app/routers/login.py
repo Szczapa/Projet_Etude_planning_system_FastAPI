@@ -43,11 +43,11 @@ def decode_access_token(token: str):
 def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     decoded_token = decode_access_token(token)
     if not decoded_token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid token")
     db = SessionLocal()
     user = db.query(User).filter(User.id == decoded_token.get('id')).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found")
 
     return user
 
@@ -65,10 +65,10 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         if decrypted_email.lower() == form_data.username.lower():
             break
     else:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
 
     if not verify_password(form_data.password, user.password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
 
     access_token = create_access_token(data={"sub": user.email, "id": user.id, "email": user.email})
     return {"access_token": access_token, "token_type": "bearer"}

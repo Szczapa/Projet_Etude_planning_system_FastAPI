@@ -50,7 +50,7 @@ def read_users(current_user: User = Depends(get_current_user)):
 #     return user
 
 
-@router.post("/users")
+@router.post("/user")
 def create_user(
         user: UserCreate
         , current_user: User = Depends(get_current_user)
@@ -71,7 +71,7 @@ def create_user(
             user.role_id = 1
         if not role_exists(db, user.role_id):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="Invalid role_id"
             )
 
@@ -83,7 +83,7 @@ def create_user(
 
     if user.company_id is None:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=400,
             detail="Missing company_id"
         )
     else:
@@ -92,13 +92,13 @@ def create_user(
         ).first()
         if company is None:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="Invalid company_id"
             )
 
     if email_exists(db, user.email.lower()):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=400,
             detail="User already exists"
         )
 
@@ -136,7 +136,7 @@ def email_exists(db: Session, email: str) -> bool:
     return False
 
 
-@router.delete("/users/{user_id}")
+@router.delete("/user/{user_id}")
 def delete_user(
         user_id: int,
         current_user: User = Depends(get_current_user)
@@ -146,32 +146,32 @@ def delete_user(
         user = db.query(User).filter(User.id == user_id).first()
         if user is None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=404,
                 detail="User not found"
             )
         else:
             db.delete(user)
             db.commit()
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
+            return Response(status_code=204)
     elif current_user.role_id == 2:
         user = db.query(User).filter(User.id == user_id).first()
         if user is None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=404,
                 detail="User not found"
             )
         elif user.company_id != current_user.company_id:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=401,
                 detail="Not authorized to delete this user"
             )
         else:
             db.delete(user)
             db.commit()
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
+            return Response(status_code=204)
 
 
-@router.put("/users/{user_id}")
+@router.put("/user/{user_id}")
 def update_user(user_id: int, user: UserUpdate, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
 
@@ -180,7 +180,7 @@ def update_user(user_id: int, user: UserUpdate, current_user: User = Depends(get
 
     # Vérifier si l'utilisateur existe
     if user_to_update is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found")
 
     # Vérifier les autorisations de mise à jour en fonction du rôle de l'utilisateur actuel
     if current_user.role_id == 3:
@@ -219,7 +219,7 @@ def update_user(user_id: int, user: UserUpdate, current_user: User = Depends(get
 
     else:
         # Pas autorisé à mettre à jour l'utilisateur
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized to update this user")
+        raise HTTPException(status_code=401, detail="Not authorized to update this user")
 
     db.commit()
     db.refresh(user_to_update)
