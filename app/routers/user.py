@@ -5,10 +5,10 @@ from modeles.user import User, UserCreate, UserUpdate
 from modeles.role import Role
 from modeles.company import Company
 from routers.login import get_current_user
-from sqlalchemy import func
 import bcrypt
 from cryptography.fernet import Fernet
 import base64
+from utils.admin import is_admin, is_maintainer
 
 key = b'OP7RRCuQzEpyIGaoiywUqh_S068cJbtXCNGPF47vzQs='
 
@@ -21,11 +21,15 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 @router.get("/users")
 def read_users(current_user: User = Depends(get_current_user)):
     db = SessionLocal()
-    if current_user.role_id == 3:
+    if is_maintainer(current_user):
         users = db.query(User).all()
-    elif current_user.role_id == 2:
+    elif is_admin(current_user) and not is_maintainer(current_user):
         users = db.query(User).filter(User.company_id == current_user.company_id).all()
-
+    else:
+        raise HTTPException(
+            status_code=401,
+            detail="Not authorized to read users"
+        )
     decrypted_users = []
     for user in users:
         decrypted_username = fernet.decrypt(base64.urlsafe_b64decode(user.username.encode('utf-8'))).decode('utf-8')
@@ -61,7 +65,7 @@ def create_user(
     Role 3: Maintainer;
     """
     db = SessionLocal()
-    if current_user.role_id != 3:
+    if not is_maintainer(current_user):
         raise HTTPException(
             status_code=401,
             detail="Not authorized to create users"
@@ -142,7 +146,7 @@ def delete_user(
         current_user: User = Depends(get_current_user)
 ):
     db = SessionLocal()
-    if current_user.role_id == 3:
+    if is_maintainer(current_user):
         user = db.query(User).filter(User.id == user_id).first()
         if user is None:
             raise HTTPException(
@@ -153,7 +157,7 @@ def delete_user(
             db.delete(user)
             db.commit()
             return Response(status_code=204)
-    elif current_user.role_id == 2:
+    elif is_admin(current_user) and not is_maintainer(current_user):
         user = db.query(User).filter(User.id == user_id).first()
         if user is None:
             raise HTTPException(
@@ -171,56 +175,4 @@ def delete_user(
             return Response(status_code=204)
 
 
-@router.put("/user/{user_id}")
-def update_user(user_id: int, user: UserUpdate, current_user: User = Depends(get_current_user)):
-    db = SessionLocal()
 
-    # Récupérer l'utilisateur cible dans la base de données
-    user_to_update = db.query(User).filter(User.id == user_id).first()
-
-    # Vérifier si l'utilisateur existe
-    if user_to_update is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Vérifier les autorisations de mise à jour en fonction du rôle de l'utilisateur actuel
-    if current_user.role_id == 3:
-        # Rang 3 : Autorisé à modifier tous les attributs
-        if user.username is not None:
-            user_to_update.username = user.username
-        if user.email is not None:
-            user_to_update.email = user.email
-        if user.role_id is not None:
-            user_to_update.role_id = user.role_id
-        if user.password is not None:
-            hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
-            user_to_update.password = hashed_password
-
-    elif current_user.role_id == 2:
-        # Rang 2 : Autorisé à modifier username, email et rôle (inférieur ou égal à 2) mais pas le mot de passe
-        if user.username is not None:
-            user_to_update.username = user.username
-        if user.email is not None:
-            user_to_update.email = user.email
-        if user.role_id is not None and user.role_id <= 2:
-            user_to_update.role_id = user.role_id
-        if user.password is not None:
-            hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
-            user_to_update.password = hashed_password
-
-    elif current_user.id == user_id:
-        # Utilisateur lui-même : Autorisé à modifier username, email et mot de passe
-        if user.username is not None:
-            user_to_update.username = user.username
-        if user.email is not None:
-            user_to_update.email = user.email
-        if user.password is not None:
-            hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
-            user_to_update.password = hashed_password
-
-    else:
-        # Pas autorisé à mettre à jour l'utilisateur
-        raise HTTPException(status_code=401, detail="Not authorized to update this user")
-
-    db.commit()
-    db.refresh(user_to_update)
-    return user_to_update

@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from routers.login import get_current_user
 from modeles.user import User
 from sqlalchemy import func
+from utils.admin import is_maintainer
 
 router = APIRouter()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -12,7 +13,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @router.get("/companies")
 def read_companies(current_user: User = Depends(get_current_user)):
-    if current_user.role_id != 3:
+    if not is_maintainer(current_user):
         raise HTTPException(status_code=401, detail="Unauthorized")
     db = SessionLocal()
     companies = db.query(Company).all()
