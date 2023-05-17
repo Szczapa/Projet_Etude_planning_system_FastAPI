@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, HTTPException, Response, Depends
 from db.db_inc import engine, Base
-from modeles.planning import Planning, PlanningCreate, PlanningParticipant, userLeavePlanning
+from modeles.planning import Planning, PlanningCreate, PlanningParticipant, userLeavePlanning, userJoinPlanning
 from modeles.user import User
 from sqlalchemy.orm import sessionmaker
 from routers.login import get_current_user
@@ -55,7 +55,7 @@ def read_planning_participants(planning_id: int, current_user: User = Depends(ge
             return {"number_of_participants": len(participants)}
 
 
-@router.post("/plannings")
+@router.post("/planning")
 def create_planning(planning: PlanningCreate, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     if not is_admin(current_user):
@@ -86,8 +86,6 @@ def create_planning(planning: PlanningCreate, current_user: User = Depends(get_c
     return new_planning
 
 
-class userJoinPlanning(BaseModel):
-    user_id: int
 
 
 @router.post("/planning/{planning_id}/join")
@@ -125,7 +123,7 @@ def join_planning(
         return new_participant
 
 
-@router.delete("/plannings/{planning_id}")
+@router.delete("/planning/{planning_id}")
 def delete_planning(planning_id: int, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     planning = db.query(Planning).filter(Planning.id == planning_id).first()

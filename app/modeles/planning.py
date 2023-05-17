@@ -32,3 +32,6 @@ class PlanningParticipant(Base):
 class userLeavePlanning(BaseModel):
     user_id: int
     company_id: int
+
+class userJoinPlanning(BaseModel):
+    user_id: int
