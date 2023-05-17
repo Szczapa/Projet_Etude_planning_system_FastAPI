@@ -29,3 +29,6 @@ class PlanningParticipant(Base):
         exclude = ('user_id',)
 
 
+class userLeavePlanning(BaseModel):
+    user_id: int
+    company_id: int

@@ -23,7 +23,7 @@ class ActivityCreate(BaseModel):
     date: date
     place: str
     creator_id: int
-    Company_id: int
+    company_id: int
     start_time: time
     end_time: time
 
@@ -33,3 +33,5 @@ class ActivityParticipants(Base):
     activity_id = Column(Integer, index=True)
     user_id = Column(Integer, index=True)
 
+class userJoinActivity(BaseModel):
+    user_id: int
