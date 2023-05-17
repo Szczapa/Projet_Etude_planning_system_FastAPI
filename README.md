@@ -52,8 +52,6 @@ Url phpmyadmin :
 
 - Gestion total des users
 - Gestion des entreprises
-- Fullscreen mode
-- Cross platform
 
 # Admin
 
@@ -83,7 +81,7 @@ Url phpmyadmin :
 
 - Post:
 
-  - /activity: Créé l'activité avec les critères suivant
+  - /activity/{planning_id}: Créé l'activité avec les critères suivant
     - Nom
     - planning_id
     - creator_id : Automatique
@@ -92,12 +90,10 @@ Url phpmyadmin :
     - start_time : a entrer au format HH:MM:SS
     - end_time : a entrer au format HH:MM:SS
   - /activity/{activity_id}/join: Rejoins l'activité spécifié + vérification d'existance + vérification de présence dans le planning lié à l'activité
-  - /activity_add/{activity_id}/{user_id}: Ajoute à l'activité spécifié l'utilisateur spécifié (Admin & createur)+ vérification d'existance + vérification de présence dans le planning lié à l'activité
-
+  
 - Delete :
   - /activity/{activity_id}/delete: supprime l'activité à l'id noté + vérification d'existance dans l'entreprise + vérification des droits
-  - /kick/{activity_id}/{user_id}: kick de l'activité à l'id noté l'utilisateur avec l'id spécifié + vérification d'existance dans l'entreprise + vérification des droits
-  - /leave/activity/{activity_id}: Retire l'utilisateur de la liste des participants + vérification de présence dans l'activité + existance de l'activité
+  - /activity/{activity_id}/leave/{user_id} Retire l'utilisateur de la liste des participants + vérification de présence dans l'activité + existance de l'activité
 
 ## État actuelle des Activités :
 
@@ -115,6 +111,7 @@ Url phpmyadmin :
 
     - Get :
       - /companies: Récupère la totalité des entreprises enregitrées.
+      -/company/{company_id}: Récupère l'entreprise à partir de son id.
 
     - Post :
       - /company: créé l'entreprise avec le nom données + comparaison de non existance.
@@ -146,12 +143,15 @@ Url phpmyadmin :
       - /planning/{planning_id}/participants: Retourne la totalité des participants si le User à le role Admin, sinon il retourne le nombre d'inscrit au planning.
 
     - Post:
+      -/planning: Créé le planning avec les critères suivant :
+        - Nom
+        - creator_id : Automatique
+        - company_id : Automatique
       - /planning/{planning_id}/join: Rejoint le planning avec l'id concerné, Uniquement valable pour l'entreprise du User.
-      - /planning_add_user/{planning_id}/{user_id}: Ajoute l'utilisateur au planning si il est dans l'entreprise + Admin only
-
+      
     - Delete:
       - /planning/{planning_id}/delete: Supprime le planning avec l'id concerné, Uniquement valable pour les Admin & dans l'entreprise de l'admin.
-      - /planning_delete_user/{planning_id}/{user_id} Supprime l'utilisateur du planning si il est dans l'entreprise + Admin only
+      - /planning/{planning_id}/leave/{user_id} Supprime l'utilisateur du planning si il est dans l'entreprise + Admin only
 
 ## État actuelle des Plannings :
 
@@ -167,6 +167,7 @@ Url phpmyadmin :
 
     - Get :
       - /roles: Affiche tout les roles uniquement role Maintainer
+      
 
 ## État actuelle des Roles :
 
@@ -180,6 +181,7 @@ Url phpmyadmin :
 
     - Get :
       - /users: Récupères tout les users de l'entreprise de l'utilisateur.
+      - /user/{user_id}: Récupère l'utilisateur avec l'id concerné
 
     - Post:
       - /user: Création de l'utilisateur, Uniquement disponible au Maintainer, Si le role n'existe pas = erreur, si role oublié utilisteur au rend de User par défaut.
