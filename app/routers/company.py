@@ -20,16 +20,20 @@ def read_companies(current_user: User = Depends(get_current_user)):
     return companies
 
 
-# @router.get("/companies/{company_id}")
-# def read_company(company_id: int):
-#     db = SessionLocal()
-#     company = db.query(Company).filter(Company.id == company_id).first()
-#     return company
+@router.get("/companies/{company_id}")
+def read_company(company_id: int, current_user: User = Depends(get_current_user)):
+    db = SessionLocal()
+    if not is_maintainer(current_user):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return company
 
 
 @router.post("/company", status_code=201)
 def create_company(company: CompanyCreate, current_user: User = Depends(get_current_user)):
-    if current_user.role_id != 3:
+    if not is_maintainer(current_user):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     db = SessionLocal()
@@ -45,9 +49,10 @@ def create_company(company: CompanyCreate, current_user: User = Depends(get_curr
     db.refresh(new_company)
     return new_company
 
+
 @router.delete("/company/{company_id}")
 def delete_company(company_id: int, current_user: User = Depends(get_current_user)):
-    if current_user.role_id != 3:
+    if not is_maintainer(current_user):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     db = SessionLocal()
@@ -58,9 +63,10 @@ def delete_company(company_id: int, current_user: User = Depends(get_current_use
     db.commit()
     return {"message": "Company deleted successfully"}
 
+
 @router.put("/company/{company_id}")
 def update_company(company_id: int, company: CompanyCreate, current_user: User = Depends(get_current_user)):
-    if current_user.role_id != 3:
+    if not is_maintainer(current_user):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     db = SessionLocal()

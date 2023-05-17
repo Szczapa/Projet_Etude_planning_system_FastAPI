@@ -23,15 +23,17 @@ def read_plannings(current_user: User = Depends(get_current_user)):
     return plannings
 
 
-# @router.get("/plannings/{planning_id}")
-# def read_planning(planning_id: int, current_user: User = Depends(get_current_user)):
-#     db = SessionLocal()
-#     planning = db.query(Planning).filter(Planning.id == planning_id).first()
-#     if planning is None:
-#         raise HTTPException(status_code=404, detail="Planning not found")
-#     if planning.company_id != current_user.company_id:
-#         raise HTTPException(status_code=404, detail="Planning not found")
-#     return planning
+@router.get("/plannings/{planning_id}")
+def read_planning(planning_id: int, current_user: User = Depends(get_current_user)):
+    db = SessionLocal()
+    planning = db.query(Planning).filter(Planning.id == planning_id).first()
+    if planning is None:
+        raise HTTPException(status_code=404, detail="Planning not found")
+    if not is_maintainer(current_user):
+        if planning.company_id != current_user.company_id:
+            raise HTTPException(status_code=404, detail="Planning not found")
+    return planning
+
 
 @router.get("/planning/{planning_id}/participants")
 def read_planning_participants(planning_id: int, current_user: User = Depends(get_current_user)):
@@ -84,8 +86,6 @@ def create_planning(planning: PlanningCreate, current_user: User = Depends(get_c
     db.commit()
     db.refresh(new_planning)
     return new_planning
-
-
 
 
 @router.post("/planning/{planning_id}/join")
@@ -164,5 +164,3 @@ def leave_planning(
         db.delete(participant)
         db.commit()
         return {"message": "User successfully left planning"}
-
-

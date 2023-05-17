@@ -47,11 +47,21 @@ def read_users(current_user: User = Depends(get_current_user)):
     return decrypted_users
 
 
-# @router.get("/user/{user_id}")
-# def read_user(user_id: int):
-#     db = SessionLocal()
-#     user = db.query(User).filter(User.id == user_id).first()
-#     return user
+@router.get("/user/{user_id}")
+def read_user(user_id: int, current_user: User = Depends(get_current_user)):
+    db = SessionLocal()
+
+    if is_maintainer(current_user):
+        user = db.query(User).filter(User.id == user_id).first()
+        if user is None:
+            raise HTTPException(status_code=404,detail="User not found")
+    elif is_admin(current_user) and not is_maintainer(current_user):
+        user = db.query(User).filter(User.id == user_id, User.company_id == current_user.company_id).first()
+        if user is None:
+            raise HTTPException(status_code=404,detail="User not found")
+    else:
+        raise HTTPException(status_code=401,detail="Not authorized to read users")
+    return user
 
 
 @router.post("/user")
