@@ -47,7 +47,7 @@ def read_users(current_user: User = Depends(get_current_user)):
     return decrypted_users
 
 
-# @router.get("/users/{user_id}")
+# @router.get("/user/{user_id}")
 # def read_user(user_id: int):
 #     db = SessionLocal()
 #     user = db.query(User).filter(User.id == user_id).first()

@@ -17,8 +17,8 @@ def read_roles(current_user: Role = Depends(get_current_user)):
     return roles
 
 
-# @router.get("/roles/{role_id}")
-# def read_role(role_id: int):
-#     db = SessionLocal()
-#     role = db.query(Role).filter(Role.id == role_id).first()
-#     return role
+@router.get("/roles/{role_id}")
+def read_role(role_id: int):
+    db = SessionLocal()
+    role = db.query(Role).filter(Role.id == role_id).first()
+    return role
