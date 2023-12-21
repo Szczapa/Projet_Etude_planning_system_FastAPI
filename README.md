@@ -8,7 +8,7 @@ Pour y parvenir nous avons utilisé l'api FastApi afin de permettre la gestion d
 Lien du git :
 
 ```bash
-  https://github.com/Szczapa/planning_system.git
+  https://github.com/Szczapa/Projet_Etude_planning_system_FastAPI
 ```
 
 Pour déployer le projet voici la commande à entrer :
