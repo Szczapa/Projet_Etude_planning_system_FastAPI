@@ -10,7 +10,8 @@ from cryptography.fernet import Fernet
 import base64
 from utils.admin import is_admin, is_maintainer
 
-key = b'OP7RRCuQzEpyIGaoiywUqh_S068cJbtXCNGPF47vzQs='
+# !!! ICI UNIQUEMENT DANS LE CADRE DU PROJET POUR DÉTAILLER LE FONCTIONNEMENT AUX JURY!!!
+key = b'Mykey'
 
 fernet = Fernet(key)
 
