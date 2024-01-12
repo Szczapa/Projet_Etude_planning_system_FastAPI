@@ -9,7 +9,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from cryptography.fernet import Fernet
 import base64
 
-key = b'OP7RRCuQzEpyIGaoiywUqh_S068cJbtXCNGPF47vzQs='
+# !!! ICI UNIQUEMENT DANS LE CADRE DU PROJET POUR DÉTAILLER LE FONCTIONNEMENT AUX JURY!!!
+key = b'Mykey'
 
 # Initialisation de la clé Fernet
 fernet = Fernet(key)
